@@ -1,0 +1,125 @@
+;;; end-mark.el --- Show mark at the end of buffer
+
+;; Author: INA Lintaro <ina@kuis.kyoto-u.ac.jp>
+
+;;; License:
+
+;; NYSL Version 0.9982 (en)
+;; ----------------------------------------
+;; A. This software is "Everyone'sWare". It means:
+;;   Anybody who has this software can use it as if you're
+;;   the author.
+;;
+;;   A-1. Freeware. No fee is required.
+;;   A-2. You can freely redistribute this software.
+;;   A-3. You can freely modify this software. And the source
+;;       may be used in any software with no limitation.
+;;   A-4. When you release a modified version to public, you
+;;       must publish it with your name.
+;;
+;; B. The author is not responsible for any kind of damages or loss
+;;   while using or misusing this software, which is distributed
+;;   "AS IS". No warranty of any kind is expressed or implied.
+;;   You use AT YOUR OWN RISK.
+;;
+;; C. Copyrighted to INA Lintaro
+;;
+;; D. Above three clauses are applied both to source and binary
+;;   form of this software.
+
+;;; Commentary:
+
+;; Show mark at the end of buffer.
+
+;; To use this mode, copy end-mark.el to your load path
+;; and add to your .emacs:
+
+;;   (require 'end-mark)
+
+;; Then end-mark-mode minor mode will be automatically enabled in every
+;; buffers.
+
+;;; Code:
+
+(defconst end-mark-version "0.01")
+
+(defgroup end-mark nil
+  "Show mark at the end of buffer"
+  :group 'convenience)
+
+(defcustom end-mark-string "[EOF]"
+  "String used to indicate the end of buffer."
+  :group 'end-mark
+  :type 'string)
+
+(defcustom end-mark-face 'shadow
+  "Face of the end mark."
+  :group 'end-mark
+  :type 'face)
+
+(defcustom end-mark-auto-install t
+  "Automatically enable end-mark-mode."
+  :group 'end-mark
+  :type 'boolean)
+
+(defcustom end-mark-exclude-modes '(hexl-mode)
+  "List of major mode symbols not to enable end-mark-mode automatically."
+  :group 'end-mark
+  :type '(repeat (symbol :tag "Major Mode")))
+
+(defvar end-mark-overlay nil)
+
+(defun end-mark-overlay-p () end-mark-overlay)
+
+(defun end-mark-adjust ()
+  (interactive)
+  (if (end-mark-overlay-p)
+      (move-overlay end-mark-overlay (point-max) (point-max))))
+
+;;;###autoload
+(define-minor-mode end-mark-mode
+  "Toggle display of mark at the end of buffer."
+  :lighter ""                           ; for desktop.el
+  (if end-mark-mode
+    (progn
+      ;; destructor
+      (make-local-variable 'change-major-mode-hook)
+      (add-hook 'change-major-mode-hook 'end-mark-off)
+      ;; end mark object
+      (make-local-variable 'end-mark-overlay)
+      (unless (end-mark-overlay-p)
+        (setq end-mark-overlay (make-overlay (point-max) (point-max))))
+      ;; overlay face
+      (set-text-properties 0 (length end-mark-string)
+                           `(face ,end-mark-face) end-mark-string)
+      (overlay-put end-mark-overlay 'after-string end-mark-string)
+      ;; auto adjust
+      (overlay-put end-mark-overlay 'insert-behind-hooks
+                   '((lambda (overlay after beg end &optional len)
+                       (when after (end-mark-adjust))))))
+    (when (end-mark-overlay-p)
+      (delete-overlay end-mark-overlay)
+      (setq end-mark-overlay nil))
+    (remove-hook 'change-major-mode-hook 'end-mark-off t)))
+
+(defun end-mark-off ()
+  (interactive)
+  (end-mark-mode 0))
+
+(defun end-mark-on ()
+  (interactive)
+  (end-mark-mode 1))
+
+;;; adjust when inserting file
+(add-hook 'after-insert-file-functions
+          '(lambda (count) (end-mark-adjust) count))
+
+;;; install
+(defun end-mark-install ()
+  (when end-mark-auto-install (end-mark-on)))
+(add-hook 'after-change-major-mode-hook
+          '(lambda () (if (null (memq major-mode end-mark-exclude-modes))
+                        (end-mark-install))))
+
+(provide 'end-mark)
+;;; end-mark.el ends here
