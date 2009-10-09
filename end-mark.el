@@ -30,14 +30,17 @@
 ;;; Commentary:
 
 ;; Show mark at the end of buffer.
-
+;;
 ;; To use this mode, copy end-mark.el to your load path
 ;; and add to your .emacs:
-
+;;
 ;;   (require 'end-mark)
-
-;; Then end-mark-mode minor mode will be automatically enabled in every
-;; buffers.
+;;
+;; Then M-x end-mark-on enables end-mark-mode in the current buffer.
+;;
+;; To automatically enable end-mark-mode in every buffers, add to your .emacs:
+;;
+;;   (global-end-mark-mode)
 
 ;;; Code:
 
@@ -57,17 +60,18 @@
   :group 'end-mark
   :type 'face)
 
-(defcustom end-mark-auto-install t
-  "Automatically enable end-mark-mode."
-  :group 'end-mark
-  :type 'boolean)
-
 (defcustom end-mark-exclude-modes '(hexl-mode)
   "List of major mode symbols not to enable end-mark-mode automatically."
   :group 'end-mark
   :type '(repeat (symbol :tag "Major Mode")))
 
+(defcustom end-mark-exclude-buffers-regexp '("^ .*" "\\*Messages\\*")
+  "List of regular expressions of buffer names not to enable end-mark-mode automatically."
+  :group 'end-mark
+  :type '(repeat 'string))
+
 (defvar end-mark-overlay nil)
+(make-variable-buffer-local 'end-mark-overlay)
 
 (defun end-mark-overlay-p () end-mark-overlay)
 
@@ -86,7 +90,6 @@
       (make-local-variable 'change-major-mode-hook)
       (add-hook 'change-major-mode-hook 'end-mark-off)
       ;; end mark object
-      (make-local-variable 'end-mark-overlay)
       (unless (end-mark-overlay-p)
         (setq end-mark-overlay (make-overlay (point-max) (point-max))))
       ;; overlay face
@@ -102,6 +105,10 @@
       (setq end-mark-overlay nil))
     (remove-hook 'change-major-mode-hook 'end-mark-off t)))
 
+;;;###autoload
+(define-globalized-minor-mode
+  global-end-mark-mode end-mark-mode end-mark-install)
+
 (defun end-mark-off ()
   (interactive)
   (end-mark-mode 0))
@@ -116,10 +123,13 @@
 
 ;;; install
 (defun end-mark-install ()
-  (when end-mark-auto-install (end-mark-on)))
-(add-hook 'after-change-major-mode-hook
-          '(lambda () (if (null (memq major-mode end-mark-exclude-modes))
-                        (end-mark-install))))
+  (let ((buf (buffer-name (current-buffer))))
+    (when (and (not (minibufferp))
+               (not (member t (mapcar '(lambda (r)
+                                         (when (string-match r buf) t))
+                                      end-mark-exclude-buffers-regexp)))
+               (null (memq major-mode end-mark-exclude-modes)))
+      (end-mark-on))))
 
 (provide 'end-mark)
 ;;; end-mark.el ends here
