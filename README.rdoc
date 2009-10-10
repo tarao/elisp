@@ -49,8 +49,8 @@ Patch for using both hexl-mode and viper-mode.
 
 == immortal-buffer.el
 
-Make buffer immortal. Immortal buffer will be just cleared when you
-kill the buffer. And it will be respawned when you save the buffer.
+Make buffer immortal. An immortal buffer will be just cleared when you
+kill the buffer. And it will be respawned when you save it.
 
 === Example
 
@@ -61,7 +61,7 @@ kill the buffer. And it will be respawned when you save the buffer.
 
 Provide relative-linum-mode which displays relative line numbers.
 
-== Usage
+=== Usage
 
   (require 'linum+)
 
@@ -69,11 +69,11 @@ And try M-x relative-linum-mode.
 
 === Requirement
 
-  linum.el from http://stud4.tuwien.ac.at/~e0225855/linum/linum.html
+linum.el from http://stud4.tuwien.ac.at/~e0225855/linum/linum.html
 
-== shel-command+.el
+== shell-command+.el
 
-Provide feature of default command from the top of the history in
+Provide feature of a default command from the top of the history in
 shell-command and shell-command-on-region.
 
 === Usage
