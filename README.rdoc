@@ -39,13 +39,13 @@ Show mark at the end of buffer.
   (require 'end-mark)
   (global-end-mark-mode)
 
-== hexl-viper-mode-patch.el
+== hexl-viper-patch.el
 
 Patch for using both hexl-mode and viper-mode.
 
 === Usage
 
-  (require 'hexl-viper-mode-patch)
+  (require 'hexl-viper-patch)
 
 == immortal-buffer.el
 
