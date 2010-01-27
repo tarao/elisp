@@ -37,7 +37,7 @@ source = $*
 source.push('*/') if source.size < 1
 
 Dir.chdir(File.dirname($0))
-source.map!{|dir|Dir.glob(dir)}.each do |dir|
+source.map!{|dir|Dir.glob(dir)}.flatten.each do |dir|
   unless compileonly || dontpull
     info.puts("pull")
     info.puts(`cd #{dir}; git pull`)
@@ -51,14 +51,15 @@ source.map!{|dir|Dir.glob(dir)}.each do |dir|
     unless compileonly
       ovw_msg = proc{|name| "#{name} already exists. overwrite? (y/n) "}
       write = [ target, target+'c' ].all? do |t|
-        !File.exist?(t) || info.ask(ovw_msg.call(t)) && File.unlink(t)
+        !(File.exist?(t) || File.symlink?(t))||
+          ( info.ask(ovw_msg.call(t)) && File.unlink(t) )
       end
       if write
         if copy
-          info.puts("copy from #{source} to #{target}")
+          info.puts("copy from #{src} to #{target}")
           FileUtils.copy(src, target)
         else
-          info.puts("make link from #{source} to #{target}")
+          info.puts("make link from #{src} to #{target}")
           File.symlink(src, target)
         end
       end
