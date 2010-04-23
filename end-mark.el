@@ -125,6 +125,7 @@
 (defun end-mark-install ()
   (let ((buf (buffer-name (current-buffer))))
     (when (and (not (minibufferp))
+               (not (buffer-base-buffer))
                (not (member t (mapcar '(lambda (r)
                                          (when (string-match r buf) t))
                                       end-mark-exclude-buffers-regexp)))
