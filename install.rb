@@ -30,8 +30,9 @@ s = $*.delete('-s') || $*.delete('--silent')
 verbose = verbose && !s
 info = Info.new(s, verbose)
 
-install = $*.any?{|x|x=~/^--install=(.*)$/} && $1 || '../site-lisp'
-emacs = $*.any?{|x|x=~/^--emacs=(.*)$/} && $1 || 'emacs'
+arg=nil
+install = $*.reject!{|x|x=~/^--install=(.*)$/&&arg=$1} && arg || '../site-lisp'
+emacs = $*.reject!{|x|x=~/^--emacs=(.*)$/&&arg=$1} && arg || 'emacs'
 
 source = $*
 source.push('*/') if source.size < 1
