@@ -82,8 +82,8 @@
 
 (defun end-mark-adjust ()
   (interactive)
-  (if (end-mark-overlay-p)
-      (move-overlay end-mark-overlay (point-max) (point-max))))
+  (when (end-mark-overlay-p)
+    (move-overlay end-mark-overlay (point-max) (point-max))))
 
 ;;;###autoload
 (define-minor-mode end-mark-mode
@@ -129,13 +129,13 @@
 ;;; install
 (defun end-mark-install ()
   (let ((buf (buffer-name (current-buffer)))
-        (patq
+        (mem-pat
          '(lambda (x l)
             (member t (mapcar '(lambda (r) (when (string-match r x) t)) l)))))
     (when (and (not (minibufferp))
                (not (buffer-base-buffer))
-               (or (funcall patq buf end-mark-mode-buffers-regexp)
-                   (not (funcall patq buf end-mark-exclude-buffers-regexp)))
+               (or (funcall mem-pat buf end-mark-mode-buffers-regexp)
+                   (not (funcall mem-pat buf end-mark-exclude-buffers-regexp)))
                (null (memq major-mode end-mark-exclude-modes)))
       (end-mark-on))))
 
