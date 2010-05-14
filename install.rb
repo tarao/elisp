@@ -35,7 +35,7 @@ arg=nil
 install = $*.reject!{|x|x=~/^--install=(.*)$/&&arg=$1} && arg || '../site-lisp'
 emacs = $*.reject!{|x|x=~/^--emacs=(.*)$/&&arg=$1} && arg || 'emacs'
 loadpath = $*.reject!{|x|x=~/^--directory=(.*)$/&&arg=$1} && arg
-emacs = emacs + "-L #{loadpath}" if loadpath
+emacs = emacs + " -L #{loadpath}" if loadpath
 
 source = $*
 source.push('*/') if source.size < 1
