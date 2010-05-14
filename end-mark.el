@@ -60,12 +60,17 @@
   :group 'end-mark
   :type 'face)
 
-(defcustom end-mark-exclude-modes '(hexl-mode diff-mode)
+(defcustom end-mark-exclude-modes '(hexl-mode)
   "List of major mode symbols not to enable end-mark-mode automatically."
   :group 'end-mark
   :type '(repeat (symbol :tag "Major Mode")))
 
-(defcustom end-mark-exclude-buffers-regexp '("^ .*" "\\*Messages\\*")
+(defcustom end-mark-mode-buffers-regexp '("^\\*scratch\\*$")
+  "List of regular expressions of buffer names to enable end-mark-mode automatically."
+  :group 'end-mark
+  :type '(repeat 'string))
+
+(defcustom end-mark-exclude-buffers-regexp '("^ .*" "^\\*")
   "List of regular expressions of buffer names not to enable end-mark-mode automatically."
   :group 'end-mark
   :type '(repeat 'string))
@@ -123,12 +128,14 @@
 
 ;;; install
 (defun end-mark-install ()
-  (let ((buf (buffer-name (current-buffer))))
+  (let ((buf (buffer-name (current-buffer)))
+        (patq
+         '(lambda (x l)
+            (member t (mapcar '(lambda (r) (when (string-match r x) t)) l)))))
     (when (and (not (minibufferp))
                (not (buffer-base-buffer))
-               (not (member t (mapcar '(lambda (r)
-                                         (when (string-match r buf) t))
-                                      end-mark-exclude-buffers-regexp)))
+               (or (funcall patq buf end-mark-mode-buffers-regexp)
+                   (not (funcall patq buf end-mark-exclude-buffers-regexp)))
                (null (memq major-mode end-mark-exclude-modes)))
       (end-mark-on))))
 
