@@ -55,7 +55,22 @@
   :group 'end-mark
   :type 'string)
 
-(defcustom end-mark-face 'shadow
+(defface end-mark-face
+  '((((class color) (min-colors 88) (background dark))
+     :foreground "seagreen1")
+    (((class color) (min-colors 88) (background light))
+     :foreground "seagreen3")
+    (((class color) (min-colors 16))
+     :foreground "brightgreen")
+    (((class color) (min-colors 8))
+     :background "green" :foreground "white")
+    (((type tty) (class mono))
+     :inverse-video t)
+    (t :background "gray"))
+  "Face of the end mark."
+  :group 'end-mark)
+
+(defcustom end-mark-face 'end-mark-face
   "Face of the end mark."
   :group 'end-mark
   :type 'face)
