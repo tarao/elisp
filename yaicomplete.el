@@ -21,6 +21,11 @@
   :type 'face
   :group 'yaicomplete)
 
+(defcustom yaicomplete-completion-delay 0.2
+  "Delay for the completion."
+  :type 'float
+  :group 'yaicomplete)
+
 (defcustom yaicomplete-auto-select-exact-completion nil
   "Automatically select an completion if it is an exact one."
   :type 'boolean
@@ -47,7 +52,7 @@
 (defvar yaicomplete-post-command-hook nil
   "yaicomplete post-command-hook")
 
-(defvar yaicomplete-timer nil)
+(defvar yaicomplete-auto-select-exact-completion-timer nil)
 
 (defadvice completion--do-completion
   (around yaicomplete-ad-completion-status activate)
@@ -67,35 +72,41 @@
               (not (string= (substring cmd (- len2 len1)) exit)))
       (yaicomplete-delete-completion-suffix))))
 
-(defun yaicomplete-cancel-timer ()
-  (when yaicomplete-timer
-    (cancel-timer yaicomplete-timer)
-    (setq yaicomplete-timer nil)))
+(defun yaicomplete-cancel-timers ()
+  (when yaicomplete-auto-select-exact-completion-timer
+    (cancel-timer yaicomplete-auto-select-exact-completion-timer)
+    (setq yaicomplete-auto-select-exact-completion-timer nil)))
 
-(defun yaicomplete-do-complete ()
+(defun yaicomplete-do-completion ()
   (setq yaicomplete-completion-contents (minibuffer-contents))
-  (let ((cmd this-command) (pt (point))
-        (yaicomplete-completion-status 0))
+  (setq yaicomplete-completion-suffix "")
+  (let ((cmd this-command) (pt (point)))
     (when (and (not (eq cmd 'minibuffer-complete))
                (not (eq cmd 'yaicomplete-exit-without-complete))
                (not (eq cmd 'yaicomplete-cancel))
-               (eq pt (field-end)))
-      ;; do complete
-      (let (minibuffer-scroll-window) (minibuffer-complete))
-      (minibuffer-completion-help)
-      ;; replace completion prefix with the original text
-      (let ((suffix (yaicomplete-completion-suffix)))
-        (delete-minibuffer-contents)
-        (insert (concat yaicomplete-completion-contents suffix)))
-      ;; timer for the auto completion
-      (when (and (= (logand yaicomplete-completion-status #b001) #b001)
-                 yaicomplete-auto-select-exact-completion)
-        (setq yaicomplete-timer
-              (run-with-idle-timer
-               yaicomplete-auto-select-exact-completion-delay
-               nil 'yaicomplete-do-exact-complete)))
-      ;; restore cursor position
-      (goto-char pt)))
+               (eq pt (field-end))
+               (sit-for yaicomplete-completion-delay))
+      (while-no-input (yaicomplete--do-completion)))))
+
+(defun yaicomplete--do-completion ()
+  (let ((pt (point)) (yaicomplete-completion-status 0)
+        minibuffer-scroll-window)
+    (minibuffer-complete)
+    (minibuffer-completion-help)
+    ;; replace completion prefix with the original text
+    (let ((suffix (yaicomplete-completion-suffix)))
+      (delete-minibuffer-contents)
+      (insert (concat yaicomplete-completion-contents suffix)))
+    ;; timer for the auto completion
+    (when (and (= (logand yaicomplete-completion-status #b001) #b001)
+               yaicomplete-auto-select-exact-completion)
+      (setq yaicomplete-auto-select-exact-completion-timer
+            (run-with-idle-timer ;; async run
+             yaicomplete-auto-select-exact-completion-delay
+             nil 'yaicomplete-do-exact-complete)))
+    ;; restore cursor position
+    (goto-char pt))
+  ;; completion suffix
   (setq yaicomplete-completion-suffix (yaicomplete-completion-suffix))
   (yaicomplete-set-completion-suffix-face)
   (yaicomplete-minibuffer-completion-help))
@@ -165,9 +176,9 @@
 (add-hook 'yaicomplete-pre-command-hook
           'yaicomplete-pre-command-delete-completion-suffix)
 (add-hook 'yaicomplete-pre-command-hook
-          'yaicomplete-cancel-timer)
+          'yaicomplete-cancel-timers)
 (add-hook 'yaicomplete-post-command-hook
-          'yaicomplete-do-complete)
+          'yaicomplete-do-completion)
 
 (defun yaicomplete-exit-without-complete ()
   (interactive)
