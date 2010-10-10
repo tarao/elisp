@@ -121,7 +121,8 @@
 
 (defun yaicomplete-delete-completion-suffix ()
   (let ((end (field-end)))
-    (delete-region (- end (length yaicomplete-completion-suffix)) end)))
+    (delete-region (- end (length yaicomplete-completion-suffix)) end)
+    (delete-overlay yaicomplete-completion-suffix-overlay)))
 
 (defun yaicomplete-set-completion-suffix-face ()
   (let ((end (field-end)) (len (length yaicomplete-completion-suffix)))
