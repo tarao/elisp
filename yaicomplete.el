@@ -21,7 +21,7 @@
   :type 'face
   :group 'yaicomplete)
 
-(defcustom yaicomplete-completion-delay 0.2
+(defcustom yaicomplete-completion-delay 0
   "Delay for the completion."
   :type 'float
   :group 'yaicomplete)
@@ -58,6 +58,14 @@
   (around yaicomplete-ad-completion-status activate)
   (setq yaicomplete-completion-status ad-do-it))
 
+(defadvice message (around yaicomplete-ad-suppress-message) nil)
+(defun yaicomplete-enable-ad-suppress-message ()
+  (ad-enable-advice 'message 'around 'yaicomplete-ad-suppress-message)
+  (ad-activate 'message))
+(defun yaicomplete-disable-ad-supress-message ()
+  (ad-disable-advice 'message 'around 'yaicomplete-ad-suppress-message)
+  (ad-activate 'message))
+
 (defun yaicomplete-fix-last-command ()
   (when (and (eq this-command 'minibuffer-complete)
              (= (length yaicomplete-completion-suffix) 0))
@@ -90,9 +98,13 @@
 
 (defun yaicomplete--do-completion ()
   (let ((pt (point)) (yaicomplete-completion-status 0)
-        minibuffer-scroll-window)
-    (minibuffer-complete)
-    (minibuffer-completion-help)
+        minibuffer-scroll-window (echo-keystrokes 0))
+    (unwind-protect
+        (progn
+          (yaicomplete-enable-ad-suppress-message)
+          (minibuffer-complete)
+          (minibuffer-completion-help))
+      (yaicomplete-disable-ad-supress-message))
     ;; replace completion prefix with the original text
     (let ((suffix (yaicomplete-completion-suffix)))
       (delete-minibuffer-contents)
@@ -120,9 +132,14 @@
       "")))
 
 (defun yaicomplete-delete-completion-suffix ()
-  (let ((end (field-end)))
-    (delete-region (- end (length yaicomplete-completion-suffix)) end)
-    (delete-overlay yaicomplete-completion-suffix-overlay)))
+  (let* ((end (field-end))
+         (len (length yaicomplete-completion-suffix))
+         (start (- end len)))
+    (when (and (<= (point-min) start)
+               (string= (buffer-substring start end)
+                        yaicomplete-completion-suffix))
+    (delete-region start end)))
+  (delete-overlay yaicomplete-completion-suffix-overlay))
 
 (defun yaicomplete-set-completion-suffix-face ()
   (let ((end (field-end)) (len (length yaicomplete-completion-suffix)))
