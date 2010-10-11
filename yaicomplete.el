@@ -21,11 +21,6 @@
   :type 'face
   :group 'yaicomplete)
 
-(defcustom yaicomplete-completion-delay 0
-  "Delay for the completion."
-  :type 'float
-  :group 'yaicomplete)
-
 (defcustom yaicomplete-auto-select-exact-completion nil
   "Automatically select an completion if it is an exact one."
   :type 'boolean
@@ -59,12 +54,21 @@
   (setq yaicomplete-completion-status ad-do-it))
 
 (defadvice message (around yaicomplete-ad-suppress-message) nil)
+(defadvice minibuffer-message
+  (around yaicomplete-ad-suppress-minibuffer-message)
+  nil)
 (defun yaicomplete-enable-ad-suppress-message ()
   (ad-enable-advice 'message 'around 'yaicomplete-ad-suppress-message)
-  (ad-activate 'message))
+  (ad-enable-advice 'minibuffer-message 'around
+                    'yaicomplete-ad-suppress-minibuffer-message)
+  (ad-activate 'message)
+  (ad-activate 'minibuffer-message))
 (defun yaicomplete-disable-ad-supress-message ()
   (ad-disable-advice 'message 'around 'yaicomplete-ad-suppress-message)
-  (ad-activate 'message))
+  (ad-disable-advice 'minibuffer-message 'around
+                     'yaicomplete-ad-suppress-minibuffer-message)
+  (ad-activate 'message)
+  (ad-activate 'minibuffer-message))
 
 (defun yaicomplete-fix-last-command ()
   (when (and (eq this-command 'minibuffer-complete)
@@ -85,30 +89,35 @@
     (cancel-timer yaicomplete-auto-select-exact-completion-timer)
     (setq yaicomplete-auto-select-exact-completion-timer nil)))
 
-(defun yaicomplete-do-completion ()
+(defun yaicomplete-post-command-do-completion ()
   (setq yaicomplete-completion-contents (minibuffer-contents))
   (setq yaicomplete-completion-suffix "")
   (let ((cmd this-command) (pt (point)))
     (when (and (not (eq cmd 'minibuffer-complete))
                (not (eq cmd 'yaicomplete-exit-without-complete))
                (not (eq cmd 'yaicomplete-cancel))
-               (eq pt (field-end))
-               (sit-for yaicomplete-completion-delay))
-      (while-no-input (yaicomplete--do-completion)))))
+               (eq pt (field-end)))
+      (yaicomplete-do-completion))
+    (when (eq cmd 'minibuffer-complete)
+      ;; keep displaying candidate list
+      (yaicomplete-minibuffer-completion-help))))
 
-(defun yaicomplete--do-completion ()
+(defun yaicomplete-do-completion ()
   (let ((pt (point)) (yaicomplete-completion-status 0)
-        minibuffer-scroll-window (echo-keystrokes 0))
+        minibuffer-scroll-window)
+    (setq yaicomplete-completion-contents (minibuffer-contents))
     (unwind-protect
         (progn
           (yaicomplete-enable-ad-suppress-message)
           (minibuffer-complete)
           (minibuffer-completion-help))
       (yaicomplete-disable-ad-supress-message))
+    ;; update completion suffix
+    (setq yaicomplete-completion-suffix (yaicomplete-completion-suffix))
     ;; replace completion prefix with the original text
-    (let ((suffix (yaicomplete-completion-suffix)))
-      (delete-minibuffer-contents)
-      (insert (concat yaicomplete-completion-contents suffix)))
+    (delete-minibuffer-contents)
+    (insert (concat yaicomplete-completion-contents
+                    yaicomplete-completion-suffix))
     ;; timer for the auto completion
     (when (and (= (logand yaicomplete-completion-status #b001) #b001)
                yaicomplete-auto-select-exact-completion)
@@ -118,9 +127,9 @@
              nil 'yaicomplete-do-exact-complete)))
     ;; restore cursor position
     (goto-char pt))
-  ;; completion suffix
-  (setq yaicomplete-completion-suffix (yaicomplete-completion-suffix))
+  ;; set face
   (yaicomplete-set-completion-suffix-face)
+  ;; show list
   (yaicomplete-minibuffer-completion-help))
 
 (defun yaicomplete-completion-suffix ()
@@ -196,14 +205,14 @@
 (add-hook 'yaicomplete-pre-command-hook
           'yaicomplete-cancel-timers)
 (add-hook 'yaicomplete-post-command-hook
-          'yaicomplete-do-completion)
+          'yaicomplete-post-command-do-completion)
 
-(defun yaicomplete-exit-without-complete ()
+(defun yaicomplete-exit-without-completion ()
   (interactive)
   (exit-minibuffer))
 
 (define-key minibuffer-local-map (kbd "C-j")
-  'yaicomplete-exit-without-complete)
+  'yaicomplete-exit-without-completion)
 
 ;;;###autoload
 (define-minor-mode yaicomplete-mode
