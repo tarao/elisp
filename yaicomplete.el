@@ -1,5 +1,6 @@
 ;;; yaicomplete.el --- Yet another incremental completion in minibuffer
 
+(defvar yaicomplete-completion-status nil)
 (defvar yaicomplete-completion-contents nil)
 (defvar yaicomplete-completion-suffix nil)
 (defvar yaicomplete-completion-suffix-overlay nil)
@@ -52,6 +53,11 @@
 (defadvice completion--do-completion
   (around yaicomplete-ad-completion-status activate)
   (setq yaicomplete-completion-status ad-do-it))
+
+(defadvice minibuffer-complete
+  (around yaicomplete-ad-minibuffer-complete-scroll-window activate)
+  (let ((minibuffer-scroll-window (get-buffer-window "*Completions*")))
+    ad-do-it))
 
 (defadvice message (around yaicomplete-ad-suppress-message) nil)
 (defadvice minibuffer-message
