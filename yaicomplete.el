@@ -32,7 +32,7 @@
   :group 'yaicomplete)
 
 (defcustom yaicomplete-exclude '()
-  "List of symbols where existence of its value indicate not to activate yaicomplete."
+  "List of symbols where existence of its value indicates not to activate yaicomplete."
   :type '(symbol)
   :group 'yaicomplete)
 
