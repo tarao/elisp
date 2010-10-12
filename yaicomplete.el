@@ -139,8 +139,8 @@
 
 (defun yaicomplete-completion-suffix ()
   (let* ((contents1 (minibuffer-contents))
-        (contents2 yaicomplete-completion-contents)
-        (len (length contents2)))
+         (contents2 yaicomplete-completion-contents)
+         (len (length contents2)))
     (if (eq t (compare-strings contents1 0 len contents2 0 len t))
         (substring contents1 len)
       "")))
@@ -152,7 +152,7 @@
     (when (and (<= (point-min) start)
                (string= (buffer-substring start end)
                         yaicomplete-completion-suffix))
-    (delete-region start end)))
+      (delete-region start end)))
   (delete-overlay yaicomplete-completion-suffix-overlay))
 
 (defun yaicomplete-set-completion-suffix-face ()
