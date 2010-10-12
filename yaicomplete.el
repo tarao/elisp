@@ -120,7 +120,9 @@
     (unwind-protect
         (progn
           (yaicomplete-enable-ad-suppress-message)
-          (minibuffer-complete)
+          (condition-case nil
+              (while-no-input (minibuffer-complete))
+            (quit nil))
           (minibuffer-completion-help))
       (yaicomplete-disable-ad-supress-message))
     ;; update completion suffix
