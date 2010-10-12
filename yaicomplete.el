@@ -54,11 +54,6 @@
   (around yaicomplete-ad-completion-status activate)
   (setq yaicomplete-completion-status ad-do-it))
 
-(defadvice minibuffer-complete
-  (around yaicomplete-ad-minibuffer-complete-scroll-window activate)
-  (let ((minibuffer-scroll-window (get-buffer-window "*Completions*")))
-    ad-do-it))
-
 (defadvice message (around yaicomplete-ad-suppress-message) nil)
 (defadvice minibuffer-message
   (around yaicomplete-ad-suppress-minibuffer-message)
@@ -75,6 +70,10 @@
                      'yaicomplete-ad-suppress-minibuffer-message)
   (ad-activate 'message)
   (ad-activate 'minibuffer-message))
+
+(defun yaicomplete-fix-minibuffer-scroll-window ()
+  (when (eq this-command 'minibuffer-complete)
+    (setq minibuffer-scroll-window (get-buffer-window "*Completions*"))))
 
 (defun yaicomplete-fix-last-command ()
   (when (and (eq this-command 'minibuffer-complete)
@@ -204,6 +203,8 @@
               nil t)
     (run-hooks 'yaicomplete-minibuffer-setup-hook)))
 
+(add-hook 'yaicomplete-pre-command-hook
+          'yaicomplete-fix-minibuffer-scroll-window)
 (add-hook 'yaicomplete-pre-command-hook
           'yaicomplete-fix-last-command)
 (add-hook 'yaicomplete-pre-command-hook
