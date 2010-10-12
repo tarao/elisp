@@ -22,6 +22,11 @@
   :type 'face
   :group 'yaicomplete)
 
+(defcustom yaicomplete-completion-delay 0
+  "Delay for the completion."
+  :type 'float
+  :group 'yaicomplete)
+
 (defcustom yaicomplete-auto-select-exact-completion nil
   "Automatically select an completion if it is an exact one."
   :type 'boolean
@@ -101,7 +106,8 @@
     (when (and (not (eq cmd 'minibuffer-complete))
                (not (eq cmd 'yaicomplete-exit-without-complete))
                (not (eq cmd 'yaicomplete-cancel))
-               (eq pt (field-end)))
+               (eq pt (field-end))
+               (sit-for yaicomplete-completion-delay))
       (yaicomplete-do-completion))
     (when (eq cmd 'minibuffer-complete)
       ;; keep displaying candidate list
