@@ -225,6 +225,7 @@
 
 (defun yaicomplete-exit-without-completion ()
   (interactive)
+  (yaicomplete-delete-completion-suffix)
   (exit-minibuffer))
 
 (define-key minibuffer-local-map (kbd "C-j")
