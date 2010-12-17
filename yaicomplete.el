@@ -63,18 +63,23 @@
 (defadvice minibuffer-message
   (around yaicomplete-ad-suppress-minibuffer-message)
   nil)
+(defadvice ding (around yaicomplete-ad-suppress-ding) nil)
 (defun yaicomplete-enable-ad-suppress-message ()
   (ad-enable-advice 'message 'around 'yaicomplete-ad-suppress-message)
   (ad-enable-advice 'minibuffer-message 'around
                     'yaicomplete-ad-suppress-minibuffer-message)
+  (ad-enable-advice 'ding 'around 'yaicomplete-ad-suppress-ding)
   (ad-activate 'message)
-  (ad-activate 'minibuffer-message))
+  (ad-activate 'minibuffer-message)
+  (ad-activate 'ding))
 (defun yaicomplete-disable-ad-supress-message ()
   (ad-disable-advice 'message 'around 'yaicomplete-ad-suppress-message)
   (ad-disable-advice 'minibuffer-message 'around
                      'yaicomplete-ad-suppress-minibuffer-message)
+  (ad-disable-advice 'ding 'around 'yaicomplete-ad-suppress-ding)
   (ad-activate 'message)
-  (ad-activate 'minibuffer-message))
+  (ad-activate 'minibuffer-message)
+  (ad-activate 'ding))
 
 (defun yaicomplete-fix-minibuffer-scroll-window ()
   (when (eq this-command 'minibuffer-complete)
