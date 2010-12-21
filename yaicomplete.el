@@ -183,14 +183,23 @@
     (overlay-put o 'face yaicomplete-completion-suffix-face)))
 
 (defun yaicomplete-minibuffer-completion-help ()
-  (unless (and minibuffer-scroll-window
-               (window-live-p minibuffer-scroll-window))
-    (minibuffer-completion-help)))
+  (unwind-protect
+      (progn
+        (yaicomplete-enable-ad-suppress-message)
+        (unless (and minibuffer-scroll-window
+                     (window-live-p minibuffer-scroll-window))
+          (minibuffer-completion-help)))
+    (yaicomplete-disable-ad-supress-message)))
 
 (defun yaicomplete-do-exact-complete ()
   ;; do complete again
   (yaicomplete-delete-completion-suffix)
-  (let (minibuffer-scroll-window) (minibuffer-complete))
+  (let (minibuffer-scroll-window)
+    (unwind-protect
+        (progn
+          (yaicomplete-enable-ad-suppress-message)
+          (minibuffer-complete))
+      (yaicomplete-disable-ad-supress-message)))
   ;; save completion prefix and suffix
   (setq yaicomplete-completion-contents (minibuffer-contents))
   (setq yaicomplete-completion-suffix (yaicomplete-completion-suffix))
