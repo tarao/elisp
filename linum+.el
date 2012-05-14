@@ -51,6 +51,8 @@
 
 (require 'linum)
 
+(defvar relative-linum-mode nil)
+
 (defcustom relative-disable-if-changed t
   "Whether relative line number mode should be disabled if buffer is changed."
   :group 'linum
