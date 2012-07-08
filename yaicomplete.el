@@ -1,5 +1,7 @@
 ;;; yaicomplete.el --- Yet another incremental completion in minibuffer
 
+(eval-when-compile (require 'cl))
+
 (defvar yaicomplete-completion-status nil)
 (defvar yaicomplete-completion-contents nil)
 (defvar yaicomplete-completion-suffix nil)
@@ -59,27 +61,12 @@
   (around yaicomplete-ad-completion-status activate)
   (setq yaicomplete-completion-status ad-do-it))
 
-(defadvice message (around yaicomplete-ad-suppress-message) nil)
-(defadvice minibuffer-message
-  (around yaicomplete-ad-suppress-minibuffer-message)
-  nil)
-(defadvice ding (around yaicomplete-ad-suppress-ding) nil)
-(defun yaicomplete-enable-ad-suppress-message ()
-  (ad-enable-advice 'message 'around 'yaicomplete-ad-suppress-message)
-  (ad-enable-advice 'minibuffer-message 'around
-                    'yaicomplete-ad-suppress-minibuffer-message)
-  (ad-enable-advice 'ding 'around 'yaicomplete-ad-suppress-ding)
-  (ad-activate 'message)
-  (ad-activate 'minibuffer-message)
-  (ad-activate 'ding))
-(defun yaicomplete-disable-ad-supress-message ()
-  (ad-disable-advice 'message 'around 'yaicomplete-ad-suppress-message)
-  (ad-disable-advice 'minibuffer-message 'around
-                     'yaicomplete-ad-suppress-minibuffer-message)
-  (ad-disable-advice 'ding 'around 'yaicomplete-ad-suppress-ding)
-  (ad-activate 'message)
-  (ad-activate 'minibuffer-message)
-  (ad-activate 'ding))
+(defmacro yaicomplete-suppress-message (&rest body)
+  (declare (indent 0))
+  `(flet ((message (string &rest args) nil)
+          (minibuffer-message (string &rest args) nil)
+          (ding (&optional args) nil))
+     ,@body))
 
 (defun yaicomplete-fix-minibuffer-scroll-window ()
   (when (eq this-command 'minibuffer-complete)
@@ -122,14 +109,11 @@
   (let ((pt (point)) (yaicomplete-completion-status 0)
         minibuffer-scroll-window)
     (setq yaicomplete-completion-contents (minibuffer-contents))
-    (unwind-protect
-        (progn
-          (yaicomplete-enable-ad-suppress-message)
-          (condition-case nil
-              (while-no-input (minibuffer-complete))
-            (quit nil))
-          (minibuffer-completion-help))
-      (yaicomplete-disable-ad-supress-message))
+    (yaicomplete-suppress-message
+      (condition-case nil
+          (while-no-input (minibuffer-complete))
+        (quit nil))
+      (minibuffer-completion-help))
     ;; update completion suffix
     (setq yaicomplete-completion-suffix (yaicomplete-completion-suffix))
     ;; replace completion prefix with the original text
@@ -183,23 +167,17 @@
     (overlay-put o 'face yaicomplete-completion-suffix-face)))
 
 (defun yaicomplete-minibuffer-completion-help ()
-  (unwind-protect
-      (progn
-        (yaicomplete-enable-ad-suppress-message)
-        (unless (and minibuffer-scroll-window
-                     (window-live-p minibuffer-scroll-window))
-          (minibuffer-completion-help)))
-    (yaicomplete-disable-ad-supress-message)))
+  (yaicomplete-suppress-message
+    (unless (and minibuffer-scroll-window
+                 (window-live-p minibuffer-scroll-window))
+      (minibuffer-completion-help))))
 
 (defun yaicomplete-do-exact-complete ()
   ;; do complete again
   (yaicomplete-delete-completion-suffix)
   (let (minibuffer-scroll-window)
-    (unwind-protect
-        (progn
-          (yaicomplete-enable-ad-suppress-message)
-          (minibuffer-complete))
-      (yaicomplete-disable-ad-supress-message)))
+    (yaicomplete-suppress-message
+      (minibuffer-complete)))
   ;; save completion prefix and suffix
   (setq yaicomplete-completion-contents (minibuffer-contents))
   (setq yaicomplete-completion-suffix (yaicomplete-completion-suffix))
