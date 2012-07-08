@@ -75,7 +75,7 @@
   :group 'end-mark
   :type 'face)
 
-(defcustom end-mark-exclude-modes '(dired-mode hexl-mode)
+(defcustom end-mark-exclude-modes '(dired-mode hexl-mode term-mode)
   "List of major mode symbols not to enable end-mark-mode automatically."
   :group 'end-mark
   :type '(repeat (symbol :tag "Major Mode")))
