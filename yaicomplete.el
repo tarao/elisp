@@ -29,6 +29,11 @@
   :type 'float
   :group 'yaicomplete)
 
+(defcustom yaicomplete-completion-minimum-chars 0
+  "Minimum number of minibuffer characters to start completion."
+  :type 'integer
+  :group 'yaicomplete)
+
 (defcustom yaicomplete-auto-select-exact-completion nil
   "Automatically select an completion if it is an exact one."
   :type 'boolean
@@ -94,16 +99,18 @@
 (defun yaicomplete-post-command-do-completion ()
   (setq yaicomplete-completion-contents (minibuffer-contents))
   (setq yaicomplete-completion-suffix "")
-  (let ((cmd this-command) (pt (point)))
-    (when (and (not (eq cmd 'minibuffer-complete))
-               (not (eq cmd 'yaicomplete-exit-without-complete))
-               (not (eq cmd 'yaicomplete-cancel))
-               (eq pt (field-end))
-               (sit-for yaicomplete-completion-delay))
-      (yaicomplete-do-completion))
-    (when (eq cmd 'minibuffer-complete)
-      ;; keep displaying candidate list
-      (yaicomplete-minibuffer-completion-help))))
+  (when (>= (length yaicomplete-completion-contents)
+            yaicomplete-completion-minimum-chars)
+    (let ((cmd this-command) (pt (point)))
+      (when (and (not (eq cmd 'minibuffer-complete))
+                 (not (eq cmd 'yaicomplete-exit-without-complete))
+                 (not (eq cmd 'yaicomplete-cancel))
+                 (eq pt (field-end))
+                 (sit-for yaicomplete-completion-delay))
+        (yaicomplete-do-completion))
+      (when (eq cmd 'minibuffer-complete)
+        ;; keep displaying candidate list
+        (yaicomplete-minibuffer-completion-help)))))
 
 (defun yaicomplete-do-completion ()
   (let ((pt (point)) (yaicomplete-completion-status 0)
