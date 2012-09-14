@@ -62,6 +62,12 @@
 (defun mode-line-color-uninstall ()
   (remove-hook 'post-command-hook 'mode-line-color-update))
 
+(defadvice set-buffer (after ad-update-mode-color-on-setting-buffer activate)
+  (mode-line-color-update))
+
+(defadvice kill-buffer (after ad-update-mode-color-on-killing-buffer activate)
+  (mode-line-color-update))
+
 ;;;###autoload
 (define-minor-mode mode-line-color-mode
   "Set color of mode line."
