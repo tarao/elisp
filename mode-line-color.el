@@ -73,7 +73,8 @@
   (remove-hook 'post-command-hook 'mode-line-color-update))
 
 (defadvice set-buffer (after ad-update-mode-color-on-setting-buffer activate)
-  (mode-line-color-update))
+  (when (eq (current-buffer) (window-buffer (selected-window)))
+    (mode-line-color-update)))
 
 (defadvice kill-buffer (after ad-update-mode-color-on-killing-buffer activate)
   (mode-line-color-update))
