@@ -72,10 +72,11 @@
   (set-face-background 'mode-line mode-line-color-original)
   (remove-hook 'post-command-hook 'mode-line-color-update))
 
-(defadvice set-buffer (after ad-update-mode-color-on-setting-buffer activate)
-  (mode-line-color-update))
+(defadvice set-buffer (after update-mode-line-color activate)
+  (when (eq (current-buffer) (window-buffer (selected-window)))
+    (mode-line-color-update)))
 
-(defadvice kill-buffer (after ad-update-mode-color-on-killing-buffer activate)
+(defadvice kill-buffer (after update-mode-line-color activate)
   (mode-line-color-update))
 
 ;;;###autoload
