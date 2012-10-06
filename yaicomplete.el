@@ -197,30 +197,33 @@
            (yaicomplete-exclude-p (cdr symbol-list)))))
 
 (defun yaicomplete-minibuffer-setup ()
-  (when (and (window-minibuffer-p (selected-window))
+  (if (and (window-minibuffer-p (selected-window))
              (not executing-kbd-macro)
              minibuffer-completion-table
              (not (yaicomplete-exclude-p yaicomplete-exclude)))
-    (setq yaicomplete-completion-contents ""
-          yaicomplete-completion-suffix "")
-    (add-hook 'pre-command-hook
-              (lambda () (run-hooks 'yaicomplete-pre-command-hook))
-              nil t)
-    (add-hook 'post-command-hook
-              (lambda () (run-hooks 'yaicomplete-post-command-hook))
-              nil t)
-    (run-hooks 'yaicomplete-minibuffer-setup-hook)))
+      (progn
+        (setq yaicomplete-completion-contents ""
+              yaicomplete-completion-suffix "")
+        (add-hook 'pre-command-hook #'yaicomplete-run-pre-command-hook nil t)
+        (add-hook 'post-command-hook #'yaicomplete-run-post-command-hook nil t)
+        (run-hooks 'yaicomplete-minibuffer-setup-hook))
+    (remove-hook 'pre-command-hook #'yaicomplete-run-pre-command-hook t)
+    (remove-hook 'post-command-hook #'yaicomplete-run-post-command-hook t)))
 
+(defun yaicomplete-run-pre-command-hook ()
+  (run-hooks 'yaicomplete-pre-command-hook))
+(defun yaicomplete-run-post-command-hook ()
+  (run-hooks 'yaicomplete-post-command-hook))
 (add-hook 'yaicomplete-pre-command-hook
-          'yaicomplete-fix-minibuffer-scroll-window)
+          #'yaicomplete-fix-minibuffer-scroll-window)
 (add-hook 'yaicomplete-pre-command-hook
-          'yaicomplete-fix-last-command)
+          #'yaicomplete-fix-last-command)
 (add-hook 'yaicomplete-pre-command-hook
-          'yaicomplete-pre-command-delete-completion-suffix)
+          #'yaicomplete-pre-command-delete-completion-suffix)
 (add-hook 'yaicomplete-pre-command-hook
-          'yaicomplete-cancel-timers)
+          #'yaicomplete-cancel-timers)
 (add-hook 'yaicomplete-post-command-hook
-          'yaicomplete-post-command-do-completion)
+          #'yaicomplete-post-command-do-completion)
 
 (defun yaicomplete-exit-without-completion ()
   (interactive)
@@ -228,7 +231,7 @@
   (exit-minibuffer))
 
 (define-key minibuffer-local-map (kbd "C-j")
-  'yaicomplete-exit-without-completion)
+  #'yaicomplete-exit-without-completion)
 
 ;;;###autoload
 (define-minor-mode yaicomplete-mode
@@ -236,7 +239,7 @@
   :global t
   :group 'yaicomplete
   (if yaicomplete-mode
-      (add-hook 'minibuffer-setup-hook 'yaicomplete-minibuffer-setup)
-    (remove-hook 'minibuffer-setup-hook 'yaicomplete-minibuffer-setup)))
+      (add-hook 'minibuffer-setup-hook #'yaicomplete-minibuffer-setup)
+    (remove-hook 'minibuffer-setup-hook #'yaicomplete-minibuffer-setup)))
 
 (provide 'yaicomplete)
