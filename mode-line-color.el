@@ -58,11 +58,10 @@
 (defmacro define-mode-line-color (bind &rest body)
   (declare (indent defun))
   (let ((prev (nth 0 bind)))
-    (add-hook 'mode-line-color-hook
-              `(lambda (setter)
-                 (let* ((,prev mode-line-color-color) (color (progn ,@body)))
-                   (when color (funcall setter color))))))
-  nil)
+    `(add-hook 'mode-line-color-hook
+               #'(lambda (setter)
+                   (let* ((,prev mode-line-color-color) (color (progn ,@body)))
+                     (when color (funcall setter color)))))))
 
 (defun mode-line-color-install ()
   (setq mode-line-color-original (face-background 'mode-line))
