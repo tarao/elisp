@@ -25,7 +25,7 @@
 
 (defvar mode-line-color-mode nil)
 (defvar mode-line-color-color nil)
-(defvar mode-line-color-original (face-background 'mode-line))
+(defvar mode-line-color-original nil)
 (defvar mode-line-color-activated nil)
 (make-variable-buffer-local 'mode-line-color-activated)
 
@@ -64,7 +64,8 @@
                      (when color (funcall setter color)))))))
 
 (defun mode-line-color-install ()
-  (setq mode-line-color-original (face-background 'mode-line))
+  (unless mode-line-color-original
+    (setq mode-line-color-original (face-background 'mode-line)))
   (add-hook 'post-command-hook 'mode-line-color-update))
 
 (defun mode-line-color-uninstall ()
