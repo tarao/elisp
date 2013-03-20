@@ -10,7 +10,7 @@
   :group 'mode-line-color
   :type '(repeat 'string))
 
-(defcustom mode-line-color-exclude-buffers-regexp '("^ " "^\\*")
+(defcustom mode-line-color-exclude-buffers-regexp '("^ ")
   "List of regular expressions of buffer names not to enable mode-line-color-mode automatically."
   :group 'mode-line-color
   :type '(repeat 'string))
